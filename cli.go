@@ -3,7 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"image"
+	"image/jpeg"
 	"io"
+	"os"
+	"strconv"
 )
 
 // Exit codes are int values that represent an exit code for a particular error.
@@ -32,8 +36,8 @@ func (cli *CLI) Run(args []string) int {
 	flags := flag.NewFlagSet(Name, flag.ContinueOnError)
 	flags.SetOutput(cli.errStream)
 
-	flags.IntVar(&w, "w", 0, "")
-	flags.IntVar(&h, "h", 0, "")
+	flags.IntVar(&w, "w", 100, "")
+	flags.IntVar(&h, "h", 100, "")
 
 	flags.BoolVar(&version, "version", false, "Print version information and quit.")
 
@@ -51,6 +55,15 @@ func (cli *CLI) Run(args []string) int {
 	_ = w
 
 	_ = h
+
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	filename := "img" + strconv.Itoa(w) + "x" + strconv.Itoa(h) + ".jpg"
+	file, _ := os.Create(filename)
+	defer file.Close()
+
+	if err := jpeg.Encode(file, img, &jpeg.Options{100}); err != nil {
+		return ExitCodeError
+	}
 
 	return ExitCodeOK
 }
