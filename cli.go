@@ -3,11 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/lucasb-eyer/go-colorful"
 	"image"
 	"image/jpeg"
 	"io"
+	"math/rand"
 	"os"
 	"strconv"
+	"time"
 )
 
 // Exit codes are int values that represent an exit code for a particular error.
@@ -32,12 +35,15 @@ func (cli *CLI) Run(args []string) int {
 		version bool
 	)
 
+	rand.Seed(time.Now().UnixNano())
+	c := colorful.Hsv(rand.Float64()*360, 0.7, 0.7)
+
 	// Define option flag parse
 	flags := flag.NewFlagSet(Name, flag.ContinueOnError)
 	flags.SetOutput(cli.errStream)
 
-	flags.IntVar(&w, "w", 100, "")
-	flags.IntVar(&h, "h", 100, "")
+	flags.IntVar(&w, "w", 100, "Image width")
+	flags.IntVar(&h, "h", 100, "Image height")
 
 	flags.BoolVar(&version, "version", false, "Print version information and quit.")
 
@@ -52,11 +58,15 @@ func (cli *CLI) Run(args []string) int {
 		return ExitCodeOK
 	}
 
-	_ = w
-
-	_ = h
-
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
+
+	rect := img.Rect
+	for h := rect.Min.Y; h < rect.Max.Y; h++ {
+		for v := rect.Min.X; v < rect.Max.X; v++ {
+			img.Set(v, h, c)
+		}
+	}
+
 	filename := "img" + strconv.Itoa(w) + "x" + strconv.Itoa(h) + ".jpg"
 	file, _ := os.Create(filename)
 	defer file.Close()
